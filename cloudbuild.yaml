@@ -76,7 +76,7 @@ images:
 
 availableSecrets:
   secretManager:
-    - versionName: projects/kharcher-a/secrets/postgres-password/versions/2
+    - versionName: projects/${PROJECT_ID}/secrets/postgres-password/versions/2
       env: 'DB_PASSWORD' 
 
 # Specify the Private Worker Pool
