@@ -29,26 +29,34 @@ steps:
         # Apply migrations
         npx prisma migrate deploy
         
-        echo "Prisma operations completed successfully."
+        # Run the database seed command (Executes script defined in package.json prisma.seed)
+        echo "Running database seed..."
+        npx prisma db seed
+
+        echo "Prisma operations and seeding completed successfully."
     secretEnv: ['DB_PASSWORD']
     waitFor: ['InstallDependencies']
     volumes:
       - name: 'node_modules'
         path: /app/node_modules
 
-  # Step 3: Build the Docker image for Prisma Studio
+  # Step 3: Get the cached image
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull gcr.io/${PROJECT_ID}/prisma-studio:latest || exit 0']
+  # Step 4; Build the Docker image for Prisma Studio
   - name: 'gcr.io/cloud-builders/docker'
     id: 'BuildImage'
     args: ['build', '-t', 'gcr.io/${PROJECT_ID}/prisma-studio:latest', '--cache-from', 'gcr.io/${PROJECT_ID}/prisma-studio:latest', '.']
     waitFor: ['PrismaOperations']
 
-  # Step 4: Push the Docker image to Container Registry
+  # Step 5: Push the Docker image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     id: 'PushImage'
     args: ['push', 'gcr.io/${PROJECT_ID}/prisma-studio:latest']
     waitFor: ['BuildImage']
 
-  # Step 5: Deploy to Cloud Run
+  # Step 6: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'DeployToCloudRun'
     entrypoint: 'bash'

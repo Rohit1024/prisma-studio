@@ -3,12 +3,33 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Or your chosen DB (mysql, sqlite, etc.)
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id    String  @id @default(uuid()) // Using UUIDs as primary keys
+  email String  @unique             // User email must be unique
+  name  String?                    // User name is optional
+  posts Post[]                     // Relation: One User has many Posts
+}
+
+model Post {
+  id         String     @id @default(uuid())
+  createdAt  DateTime   @default(now())     // Timestamp when post was created
+  updatedAt  DateTime   @updatedAt          // Timestamp when post was last updated
+  title      String                         // Post title is required
+  content    String?                        // Post content is optional
+  published  Boolean    @default(false)      // Whether the post is published (defaults to false)
+  authorId   String                         // Foreign key linking to User
+  author     User       @relation(fields: [authorId], references: [id]) // Relation field back to User
+  categories Category[] // Relation: Many Posts can have many Categories (Implicit Many-to-Many)
+
+  @@index([authorId]) // Add an index on authorId for query performance
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique // Category name must be unique
+  posts Post[]         // Relation: One Category can have many Posts (Implicit Many-to-Many)
 }
